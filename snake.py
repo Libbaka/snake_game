@@ -1,106 +1,112 @@
 import pygame
 import random
+import sys
 
 pygame.init()
 
+WIDTH, HEIGHT = 600, 400
+GRID_SIZE = 20
+FPS = 10
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
 
-dis_width = 600
-dis_height = 400
-dis = pygame.display.set_mode((dis_width, dis_height))
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Had (Snake)')
 
+#SNAKE:
+class Snake:
+    def __init__(self):
+        self.positions = [(WIDTH // 2, HEIGHT // 2)]
+        self.direction = (0, -GRID_SIZE)
+        self.grow = False
 
-black = (0, 0, 0)
-red = (213, 50, 80)
-green = (0, 255, 0)
-blue = (50, 153, 213)
+    def get_head_position(self):
+        return self.positions[0]
 
+    def update(self):
+        cur = self.get_head_position()
+        x, y = self.direction
+        new = (((cur[0] + x) % WIDTH), (cur[1] + y) % HEIGHT)
 
-clock = pygame.time.Clock()
-snake_block = 10
-snake_speed = 15
+        if new in self.positions:
+            return False
+        else:
+            self.positions = [new] + self.positions
+            if not self.grow:
+                self.positions.pop()
+            else:
+                self.grow = False
+            return True
 
-# Font
-font_style = pygame.font.SysFont(None, 35)
+    def reset(self):
+        self.positions = [(WIDTH // 2, HEIGHT // 2)]
+        self.direction = (0, -GRID_SIZE)
 
+    def change_direction(self, dir):
+        if (dir[0] * -1, dir[1] * -1) != self.direction:
+            self.direction = dir
 
-def our_snake(snake_block, snake_list):
-    for x in snake_list:
-        pygame.draw.rect(dis, black, [x[0], x[1], snake_block, snake_block])
+    def draw(self, surface):
+        for p in self.positions:
+            pygame.draw.rect(surface, GREEN, pygame.Rect(p[0], p[1], GRID_SIZE, GRID_SIZE))
 
-
-def message(msg, color):
-    mesg = font_style.render(msg, True, color)
-    dis.blit(mesg, [dis_width / 6, dis_height / 3])
-
-
-def get_llm_move(game_state):
-    return random.choice(['LEFT', 'RIGHT', 'UP', 'DOWN'])
-
-
-def gameLoop_with_llm():
-    game_over = False
-    x1 = dis_width / 2
-    y1 = dis_height / 2
-    x1_change = 0
-    y1_change = 0
-    snake_List = []
-    Length_of_snake = 1
-    foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
-    foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
-
-    while not game_over:
+    def handle_keys(self):
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    self.change_direction((0, -GRID_SIZE))
+                elif event.key == pygame.K_DOWN:
+                    self.change_direction((0, GRID_SIZE))
+                elif event.key == pygame.K_LEFT:
+                    self.change_direction((-GRID_SIZE, 0))
+                elif event.key == pygame.K_RIGHT:
+                    self.change_direction((GRID_SIZE, 0))
 
-        # Simulace state a tah LLM
-        game_state = {'head': (x1, y1), 'food': (foodx, foody), 'snake': snake_List}
-        move = get_llm_move(game_state)
+#FOOD:
+class Food:
+    def __init__(self):
+        self.position = (0, 0)
+        self.randomize_position()
 
-        if move == 'LEFT':
-            x1_change = -snake_block
-            y1_change = 0
-        elif move == 'RIGHT':
-            x1_change = snake_block
-            y1_change = 0
-        elif move == 'UP':
-            y1_change = -snake_block
-            x1_change = 0
-        elif move == 'DOWN':
-            y1_change = snake_block
-            x1_change = 0
+    def randomize_position(self):
+        self.position = (random.randint(0, (WIDTH - GRID_SIZE) // GRID_SIZE) * GRID_SIZE,
+                         random.randint(0, (HEIGHT - GRID_SIZE) // GRID_SIZE) * GRID_SIZE)
 
-        if x1 >= dis_width or x1 < 0 or y1 >= dis_height or y1 < 0:
-            game_over = True
-        x1 += x1_change
-        y1 += y1_change
-        dis.fill(blue)
-        pygame.draw.rect(dis, green, [foodx, foody, snake_block, snake_block])
-        snake_Head = []
-        snake_Head.append(x1)
-        snake_Head.append(y1)
-        snake_List.append(snake_Head)
-        if len(snake_List) > Length_of_snake:
-            del snake_List[0]
+    def draw(self, surface):
+        pygame.draw.rect(surface, RED, pygame.Rect(self.position[0], self.position[1], GRID_SIZE, GRID_SIZE))
 
-        for x in snake_List[:-1]:
-            if x == snake_Head:
+def main():
+    clock = pygame.time.Clock()
+    snake = Snake()
+    food = Food()
+    game_over = False
+
+    while True:
+        if not game_over:
+            snake.handle_keys()
+            if not snake.update():
                 game_over = True
 
-        our_snake(snake_block, snake_List)
-        pygame.display.update()
+            if snake.get_head_position() == food.position:
+                snake.grow = True
+                food.randomize_position()
 
-        if x1 == foodx and y1 == foody:
-            foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
-            foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
-            Length_of_snake += 1
+            screen.fill(BLACK)
+            snake.draw(screen)
+            food.draw(screen)
+            pygame.display.update()
+            clock.tick(FPS)
+        else:
+            screen.fill(BLACK)
+            font = pygame.font.SysFont(None, 55)
+            text = font.render("Game Over", True, WHITE)
+            screen.blit(text, [WIDTH // 4, HEIGHT // 2])
+            pygame.display.update()
+            pygame.time.wait(2000)
+            pygame.quit()
+            sys.exit()
 
-        clock.tick(snake_speed)
-
-    pygame.quit()
-    quit()
-
-gameLoop_with_llm()
-
+if __name__ == '__main__':
+    main()
