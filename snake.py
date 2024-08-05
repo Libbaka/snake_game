@@ -35,8 +35,6 @@ def message(msg, color):
 
 
 def get_llm_move(game_state):
-    # Zde byste použili LLM pro generování tahů na základě game_state.
-    # Pro účely příkladu použijeme náhodný tah.
     return random.choice(['LEFT', 'RIGHT', 'UP', 'DOWN'])
 
 
