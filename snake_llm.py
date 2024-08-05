@@ -3,19 +3,19 @@ import random
 
 pygame.init()
 
-
+# Nastavení obrazovky
 dis_width = 600
 dis_height = 400
 dis = pygame.display.set_mode((dis_width, dis_height))
 pygame.display.set_caption('Had (Snake)')
 
-
+# Barvy
 black = (0, 0, 0)
 red = (213, 50, 80)
 green = (0, 255, 0)
 blue = (50, 153, 213)
 
-
+# Nastavení
 clock = pygame.time.Clock()
 snake_block = 10
 snake_speed = 15
@@ -25,20 +25,34 @@ font_style = pygame.font.SysFont(None, 35)
 
 
 def our_snake(snake_block, snake_list):
+    """Vykreslí hada na obrazovce."""
     for x in snake_list:
         pygame.draw.rect(dis, black, [x[0], x[1], snake_block, snake_block])
 
 
 def message(msg, color):
+    """Zobrazí zprávu na obrazovce."""
     mesg = font_style.render(msg, True, color)
     dis.blit(mesg, [dis_width / 6, dis_height / 3])
 
 
 def get_llm_move(game_state):
-    return random.choice(['LEFT', 'RIGHT', 'UP', 'DOWN'])
+    """Simuluje rozhodování LLM o pohybu hada na základě stavu hry."""
+    head_x, head_y = game_state['head']
+    food_x, food_y = game_state['food']
+
+    if head_x < food_x:
+        return 'RIGHT'
+    elif head_x > food_x:
+        return 'LEFT'
+    elif head_y < food_y:
+        return 'DOWN'
+    elif head_y > food_y:
+        return 'UP'
 
 
 def gameLoop_with_llm():
+    """Hlavní herní smyčka, která používá LLM pro rozhodování o pohybu hada."""
     game_over = False
     x1 = dis_width / 2
     y1 = dis_height / 2
@@ -72,19 +86,21 @@ def gameLoop_with_llm():
             y1_change = snake_block
             x1_change = 0
 
+        # Kontrola hranic
         if x1 >= dis_width or x1 < 0 or y1 >= dis_height or y1 < 0:
             game_over = True
+
+        # Aktualizace pozice hada
         x1 += x1_change
         y1 += y1_change
         dis.fill(blue)
         pygame.draw.rect(dis, green, [foodx, foody, snake_block, snake_block])
-        snake_Head = []
-        snake_Head.append(x1)
-        snake_Head.append(y1)
+        snake_Head = [x1, y1]
         snake_List.append(snake_Head)
         if len(snake_List) > Length_of_snake:
             del snake_List[0]
 
+        # Kontrola kolize s vlastním tělem
         for x in snake_List[:-1]:
             if x == snake_Head:
                 game_over = True
@@ -92,6 +108,7 @@ def gameLoop_with_llm():
         our_snake(snake_block, snake_List)
         pygame.display.update()
 
+        # Kontrola, zda had sežral jídlo
         if x1 == foodx and y1 == foody:
             foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
             foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
