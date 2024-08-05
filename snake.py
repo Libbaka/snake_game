@@ -1,112 +1,108 @@
 import pygame
 import random
-import sys
 
 pygame.init()
 
-WIDTH, HEIGHT = 600, 400
-GRID_SIZE = 20
-FPS = 10
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+dis_width = 600
+dis_height = 400
+dis = pygame.display.set_mode((dis_width, dis_height))
 pygame.display.set_caption('Had (Snake)')
 
-# Třída pro hada
-class Snake:
-    def __init__(self):
-        self.positions = [(WIDTH // 2, HEIGHT // 2)]
-        self.direction = (0, -GRID_SIZE)
-        self.grow = False
 
-    def get_head_position(self):
-        return self.positions[0]
+black = (0, 0, 0)
+red = (213, 50, 80)
+green = (0, 255, 0)
+blue = (50, 153, 213)
 
-    def update(self):
-        cur = self.get_head_position()
-        x, y = self.direction
-        new = (((cur[0] + x) % WIDTH), (cur[1] + y) % HEIGHT)
 
-        if new in self.positions:
-            return False
-        else:
-            self.positions = [new] + self.positions
-            if not self.grow:
-                self.positions.pop()
-            else:
-                self.grow = False
-            return True
+clock = pygame.time.Clock()
+snake_block = 10
+snake_speed = 15
 
-    def reset(self):
-        self.positions = [(WIDTH // 2, HEIGHT // 2)]
-        self.direction = (0, -GRID_SIZE)
+# Font
+font_style = pygame.font.SysFont(None, 35)
 
-    def change_direction(self, dir):
-        if (dir[0] * -1, dir[1] * -1) != self.direction:
-            self.direction = dir
 
-    def draw(self, surface):
-        for p in self.positions:
-            pygame.draw.rect(surface, GREEN, pygame.Rect(p[0], p[1], GRID_SIZE, GRID_SIZE))
+def our_snake(snake_block, snake_list):
+    for x in snake_list:
+        pygame.draw.rect(dis, black, [x[0], x[1], snake_block, snake_block])
 
-    def handle_keys(self):
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
-                    self.change_direction((0, -GRID_SIZE))
-                elif event.key == pygame.K_DOWN:
-                    self.change_direction((0, GRID_SIZE))
-                elif event.key == pygame.K_LEFT:
-                    self.change_direction((-GRID_SIZE, 0))
-                elif event.key == pygame.K_RIGHT:
-                    self.change_direction((GRID_SIZE, 0))
 
-# Třída pro jídlo
-class Food:
-    def __init__(self):
-        self.position = (0, 0)
-        self.randomize_position()
+def message(msg, color):
+    mesg = font_style.render(msg, True, color)
+    dis.blit(mesg, [dis_width / 6, dis_height / 3])
 
-    def randomize_position(self):
-        self.position = (random.randint(0, (WIDTH - GRID_SIZE) // GRID_SIZE) * GRID_SIZE,
-                         random.randint(0, (HEIGHT - GRID_SIZE) // GRID_SIZE) * GRID_SIZE)
 
-    def draw(self, surface):
-        pygame.draw.rect(surface, RED, pygame.Rect(self.position[0], self.position[1], GRID_SIZE, GRID_SIZE))
+def get_llm_move(game_state):
+    # Zde byste použili LLM pro generování tahů na základě game_state.
+    # Pro účely příkladu použijeme náhodný tah.
+    return random.choice(['LEFT', 'RIGHT', 'UP', 'DOWN'])
 
-def main():
-    clock = pygame.time.Clock()
-    snake = Snake()
-    food = Food()
+
+def gameLoop_with_llm():
     game_over = False
+    x1 = dis_width / 2
+    y1 = dis_height / 2
+    x1_change = 0
+    y1_change = 0
+    snake_List = []
+    Length_of_snake = 1
+    foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
+    foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
 
-    while True:
-        if not game_over:
-            snake.handle_keys()
-            if not snake.update():
+    while not game_over:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+
+        # Simulace state a tah LLM
+        game_state = {'head': (x1, y1), 'food': (foodx, foody), 'snake': snake_List}
+        move = get_llm_move(game_state)
+
+        if move == 'LEFT':
+            x1_change = -snake_block
+            y1_change = 0
+        elif move == 'RIGHT':
+            x1_change = snake_block
+            y1_change = 0
+        elif move == 'UP':
+            y1_change = -snake_block
+            x1_change = 0
+        elif move == 'DOWN':
+            y1_change = snake_block
+            x1_change = 0
+
+        if x1 >= dis_width or x1 < 0 or y1 >= dis_height or y1 < 0:
+            game_over = True
+        x1 += x1_change
+        y1 += y1_change
+        dis.fill(blue)
+        pygame.draw.rect(dis, green, [foodx, foody, snake_block, snake_block])
+        snake_Head = []
+        snake_Head.append(x1)
+        snake_Head.append(y1)
+        snake_List.append(snake_Head)
+        if len(snake_List) > Length_of_snake:
+            del snake_List[0]
+
+        for x in snake_List[:-1]:
+            if x == snake_Head:
                 game_over = True
 
-            if snake.get_head_position() == food.position:
-                snake.grow = True
-                food.randomize_position()
+        our_snake(snake_block, snake_List)
+        pygame.display.update()
 
-            screen.fill(BLACK)
-            snake.draw(screen)
-            food.draw(screen)
-            pygame.display.update()
-            clock.tick(FPS)
-        else:
-            screen.fill(BLACK)
-            font = pygame.font.SysFont(None, 55)
-            text = font.render("Game Over", True, WHITE)
-            screen.blit(text, [WIDTH // 4, HEIGHT // 2])
-            pygame.display.update()
-            pygame.time.wait(2000)
-            pygame.quit()
-            sys.exit()
+        if x1 == foodx and y1 == foody:
+            foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
+            foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
+            Length_of_snake += 1
 
-if __name__ == '__main__':
-    main()
+        clock.tick(snake_speed)
+
+    pygame.quit()
+    quit()
+
+gameLoop_with_llm()
+
