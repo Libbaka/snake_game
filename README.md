@@ -26,13 +26,13 @@ Napište kód pro hru Snake v Pythonu s použitím knihovny Pygame. Hra by měla
 - Hlavní herní smyčka, která zajišťuje pohyb hada a aktualizaci herního stavu.
 - Funkci pro vykreslení hada a jídla.
 - Funkci pro zpracování kolizí a konce hry.
-- Funkci, která simuluje rozhodování LLM pro pohyb hada (například náhodný výběr mezi 'LEFT', 'RIGHT', 'UP', 'DOWN').
-
+- Funkci, která simuluje rozhodování LLM pro pohyb hada s cílem efektivně pronásledovat jídlo (například na základě aktuální pozice hada a jídla).
 Kód by měl obsahovat inicializaci Pygame, nastavení obrazovky a herní smyčku, která aktualizuje pozici hada na základě rozhodnutí LLM a kontroluje kolize.
 
 Prompt 2:
-Vytvořte návod, jak použít LLM pro řízení hry Snake. Vysvětlete, jak LLM může být integrováno do hry, aby rozhodovalo o pohybu hada na základě aktuálního herního stavu. Návod by měl zahrnovat:
+Vytvořte návod, jak použít LLM pro řízení hry Snake. Vysvětlete, jak LLM může být integrováno do hry, aby efektivně pronásledovalo jídlo na základě aktuálního herního stavu. Návod by měl zahrnovat:
 - Popis, jak LLM může generovat tahy hada na základě informace o pozici hada, jídla a stavu hry.
 - Jak integrovat rozhodování LLM do herní smyčky.
 - Jaké vstupy LLM potřebuje a jaké výstupy generuje.
-- Příklady použití LLM pro simulaci rozhodování o pohybu hada (například pomocí náhodného výběru mezi směry).
+- Příklady použití LLM pro simulaci rozhodování o pohybu hada, které zahrnuje pronásledování jídla (například výběr směru, který minimalizuje vzdálenost k jídlu).
+
